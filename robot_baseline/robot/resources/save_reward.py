@@ -7,13 +7,13 @@ rewardarr = []
 #     plt.ylabel('reward')
 #     plt.xlabel('total_timesteps')
 
-#[DDPG:1,3]PPO 1
 
 import os
 
-reward_path = os.path.join(os.path.dirname(__file__), './SAC_reward.npy')
-finish = os.path.join(os.path.dirname(__file__), './SAC_finish.npy')
-
+reward_path = os.path.join(os.path.dirname(__file__), 'SAC_reward.npy')
+finish = os.path.join(os.path.dirname(__file__), 'SAC_finish.npy')
+# print(reward_path)
+# reward_path = '/Walking-on-the-ramp/robot_baseline/robot/resources/SAC_reward.npy'
 def save(reward):
     # rewardarr.append(reward)
     # plt.plot(rewardarr)
@@ -29,15 +29,15 @@ def save(reward):
 
 def step_C(step):
     x = step
-    arr = np.load('H:/Walking/robot_baseline/robot/resources/step.npy')
+    arr = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/step.npy')
     arr = np.append(arr, x)
-    np.save('H:/Walking/robot_baseline/robot/resources/step.npy', arr)
+    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/step.npy', arr)
 
 def clear():
     a = []
-    # np.save('H:/Walking/robot_baseline/robot/resources/finish.npy',a)
+    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/finish.npy',a)
     np.save(reward_path, a)
-    np.save('H:/Walking/robot_baseline/robot/resources/step.npy', a)
+    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/step.npy', a)
 
 def smooth(y, box):
 
@@ -50,40 +50,35 @@ def smooth(y, box):
 
 def load():
     data1 = np.load(reward_path)
-    smoo  = smooth(data1, 10000)
+    # smoo  = smooth(data1, 10000)
     # smoo = np.load("./smooth-SAC-10000.npy")
-    plt.plot(smoo)
-    # plt.plot(data1)
+    # plt.plot(smoo)
+    plt.plot(data1)
     plt.show()
 
 def save_done(reward):
     z = reward
-    arr = np.load('H:/Walking/robot_baseline/robot/resources/SAC_finish.npy')
+    arr = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/SAC_finish.npy')
     arr = np.append(arr, z)
-    np.save('H:/Walking/robot_baseline/robot/resources/SAC_finish.npy', arr)
-
+    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/SAC_finish.npy', arr)
 
 
 def load_done():
-    # data1 = np.load('H:/Walking/robot_baseline/robot/resources/finish.npy')
-    data1 = np.load("H:/Walking/robot_baseline/robot/resources/SAC_finish.npy")
-    # data1 = np.load('H:/Walking/reward/TD3/TD3_reward.npy')
-    # data1 = np.load('H:/Walking/robot_baseline/紅點成功/2/reward.npy')
-    # data1 = np.load('H:/Walking/robot_baseline/藍點成功/2/reward.npy')
+    data1 = np.load("/Walking-on-the-ramp/robot_baseline/robot/resources/SAC_finish.npy")
     plt.plot(data1)
     plt.show()
 
 def load_data():
-    data1 = np.load("H:/Walking/robot_baseline/logs/1005_ramp_slop_rand/reward.npy")
+    data1 = np.load("/Walking-on-the-ramp/robot_baseline/logs/1005_ramp_slop_rand/reward.npy")
     plt.plot(data1)
     plt.show()
 
 def show_step():
-    data1 = np.load('H:/Walking/robot_baseline/robot/resources/step.npy')
+    data1 = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/step.npy')
     plt.plot(data1)
     plt.show()
 
-# clear()
+clear()
 
 # load()
 

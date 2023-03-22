@@ -72,7 +72,7 @@ class Op3Env(gym.Env):
         self.state = self.OP3.get_state()
         self.reward = self.reward_fun()
         self.cube_ran()
-        # save(self.reward)
+        save(self.reward)
         info = {}
         return OP3_ob, self.reward, self.done, info
 
