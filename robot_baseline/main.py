@@ -25,7 +25,7 @@ class CustomCNN(BaseFeaturesExtractor):
         This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(self, observation_space: gym.spaces.Dict, cnn_output_dim: int = 256):
+    def __init__(self, observation_space: gym.spaces.Dict):
         # TODO we do not know features-dim here before going over all the items, so put something there. This is dirty!
         super(CustomCNN, self).__init__(observation_space, features_dim=1)
 
@@ -97,11 +97,7 @@ class CustomCNN(BaseFeaturesExtractor):
         encoded_tensor_list = []
 
         for key, extractor in self.extractors.items():
-
             encoded_tensor_list.append(extractor(observations[key]))
-            print('name', {key}, '->', np.shape(extractor(observations[key])))
-            # print(np.shape(extractor(observations[key])))
-        # print(encoded_tensor_list)
 
         return th.cat(encoded_tensor_list, dim=1)
 

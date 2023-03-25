@@ -52,8 +52,8 @@ class Op3Env(gym.Env):
         self.np_random, _ = gym.utils.seeding.np_random()
 
         # 選擇連結方式
-        # self.client = p.connect(p.DIRECT)
-        self.client = p.connect(p.GUI)
+        self.client = p.connect(p.DIRECT)
+        # self.client = p.connect(p.GUI)
         # 加速訓練
         p.setTimeStep(1/240, self.client)
         # 初始化所有東西
