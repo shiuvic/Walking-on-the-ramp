@@ -1,6 +1,7 @@
 import matplotlib
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 matplotlib.use('tkagg')
 rewardarr = []
 # plt.figure(figsize=(6, 4))
@@ -42,15 +43,15 @@ def clear():
 def smooth(y, box):
 
     ans = []
-    for i in range(0, 300000-box, 1):
+    for i in range(0, 200000-box, 1):
         y_sum = sum(y[i:i+box])
         ans.append(y_sum/box)
-    np.save("./smooth-SAC-10000", ans)
+    # np.save("./smooth-SAC-30000", ans)
     return ans
 
 def load():
     data1 = np.load(reward_path)
-    # smoo  = smooth(data1, 10000)
+    # smoo  = smooth(data1, 30000)
     # smoo = np.load("./smooth-SAC-10000.npy")
     # plt.plot(smoo)
     plt.plot(data1)
@@ -78,7 +79,7 @@ def show_step():
     plt.plot(data1)
     plt.show()
 
-clear()
+# clear()
 
 # load()
 

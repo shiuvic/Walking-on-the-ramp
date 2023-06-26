@@ -74,7 +74,8 @@ def plot_data():
     plt.pause(1./48.)
     plt.clf()
 
-# clear()
+clear()
+
 # plot_data()
 # # x = np.full(128, 5)
 # # x = np.append(x, 6)

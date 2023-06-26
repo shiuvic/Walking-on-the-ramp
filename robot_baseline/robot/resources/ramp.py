@@ -4,8 +4,10 @@ import numpy as np
 
 
 def clean_ramp():
-    # a = [40]
-    a = [25]
+    ##神秘數字##
+    # a = [180]
+    a = [40]
+    # a = [25]
     # a = [30]
     np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/ramp.npy', a)
 

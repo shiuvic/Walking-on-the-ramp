@@ -103,7 +103,7 @@ class OP3:
         self.sim = None
         # self.run_acc_th()
         # self.update_camera_th()
-
+        self.clear_force()
         self.run_sim_th()
 
         self._set_joint()
@@ -114,6 +114,14 @@ class OP3:
         mass = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/cube_weight.npy')[0]
         self.set_cube_weight(mass)
 
+
+
+    def ready(self):
+            self.ready_pos = self.wfunc.get(True, 0, [0, 0, 0])
+            self.ready_pos.update({"r_sho_pitch": 0, "l_sho_pitch": 0,
+                                   "r_sho_roll": -1.0, "l_sho_roll": 1.0,
+                                   "r_el": 0.5, "l_el": -0.5,
+                                   })
 
     @property
     def sim_speed(self):
@@ -226,9 +234,11 @@ class OP3:
     def run(self):
 
         try:
+            self.set_angles_slow(self.ready_pos)
             while True:
                 p.stepSimulation()
                 time.sleep(1. / 240.)
+                self.show_force(4)
         finally:
             OP3Pos, OP3Orn = p.getBasePositionAndOrientation(self.robot)
             # print(OP3Pos, OP3Orn)
@@ -304,7 +314,7 @@ class OP3:
         pre_vel[0] = p.getBaseVelocity(self.robot)[0][0]
         pre_vel[1] = p.getBaseVelocity(self.robot)[0][1]
         pre_vel[2] = p.getBaseVelocity(self.robot)[0][2]
-        # 串街 位置, 方向, 加速度 當作 observation
+        # 串街 位置, 方向, 加速度
         time.sleep(t)
         new_vel[0] = p.getBaseVelocity(self.robot)[0][0]
         new_vel[1] = p.getBaseVelocity(self.robot)[0][1]
@@ -370,6 +380,34 @@ class OP3:
     def get_force(self, num):
         return p.getJointState(self.robot, num)[3]
 
+    def save_force(self):
+        l_ank_pitch = self.get_force(4)
+        l_ank_roll = self.get_force(5)
+        r_ank_pitch = self.get_force(10)
+        r_ank_roll = self.get_force(11)
+
+        l_ank_pitch_arr = np.load('l_ank_pitch_force.npy')
+        l_ank_roll_arr = np.load('l_ank_roll_force.npy')
+        r_ank_pitch_arr = np.load('r_ank_pitch_force.npy')
+        r_ank_roll_arr = np.load('r_ank_roll_force.npy')
+
+        l_ank_pitch_arr = np.append(l_ank_pitch_arr, l_ank_pitch)
+        l_ank_roll_arr = np.append(l_ank_roll_arr, l_ank_roll)
+        r_ank_pitch_arr = np.append(r_ank_pitch_arr, r_ank_pitch)
+        r_ank_roll_arr = np.append(r_ank_roll_arr, r_ank_roll)
+
+        np.save('l_ank_pitch_force.npy', l_ank_pitch_arr)
+        np.save('l_ank_roll_force.npy', l_ank_roll_arr)
+        np.save('r_ank_pitch_force.npy', r_ank_pitch_arr)
+        np.save('r_ank_roll_force.npy', r_ank_roll_arr)
+
+    def clear_force(self):
+        arr = []
+        np.save('l_ank_pitch_force.npy', arr)
+        np.save('l_ank_roll_force.npy', arr)
+        np.save('r_ank_pitch_force.npy', arr)
+        np.save('r_ank_roll_force.npy', arr)
+
     def get_acc(self):
         self.acc = self.get_acceleration()
         return self.acc
@@ -425,5 +463,5 @@ def interpolate(anglesa, anglesb, coefa):
 
 if __name__ == '__main__':
     op3 = OP3(p.connect(p.GUI))
-    op3.run()
+    # op3.run()
     pass

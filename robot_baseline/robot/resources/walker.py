@@ -232,7 +232,7 @@ class Walker(OP3):
             'accx': acc[0],
             'accy': acc[1],
             'accz': acc[2],
-            'torque': np.array([l_ank_pitch, l_ank_roll, r_ank_pitch, r_ank_roll])
+            # 'torque': np.array([l_ank_pitch, l_ank_roll, r_ank_pitch, r_ank_roll])
         }
         return ob
 

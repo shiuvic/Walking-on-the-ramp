@@ -40,7 +40,7 @@ class Op3Env(gym.Env):
             'accx': gym.spaces.box.Box(low=-20, high=20, shape=(128,)),
             'accy': gym.spaces.box.Box(low=-20, high=20, shape=(128,)),
             'accz': gym.spaces.box.Box(low=-20, high=20, shape=(128,)),
-            'torque': gym.spaces.box.Box(low=-15, high=15, shape=(4, ))
+            # 'torque': gym.spaces.box.Box(low=-15, high=15, shape=(4, ))
         }
 
         # self.observation_space = gym.spaces.box.Box(
@@ -52,8 +52,8 @@ class Op3Env(gym.Env):
         self.np_random, _ = gym.utils.seeding.np_random()
 
         # 選擇連結方式
-        self.client = p.connect(p.DIRECT)
-        # self.client = p.connect(p.GUI)
+        # self.client = p.connect(p.DIRECT)
+        self.client = p.connect(p.GUI)
         # 加速訓練
         p.setTimeStep(1/240, self.client)
         # 初始化所有東西
@@ -72,7 +72,8 @@ class Op3Env(gym.Env):
         self.state = self.OP3.get_state()
         self.reward = self.reward_fun()
         self.cube_ran()
-        save(self.reward)
+        # save(self.reward)
+        self.OP3.save_force()
         info = {}
         return OP3_ob, self.reward, self.done, info
 

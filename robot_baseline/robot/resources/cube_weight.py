@@ -6,7 +6,7 @@ def save_weight(x):
 
 def clean_weight():
     # a = [0.8]
-    a = [0.6]
+    a = [0.4]
     np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/cube_weight.npy', a)
 
 def load():
