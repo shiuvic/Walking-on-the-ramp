@@ -2,15 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 # matplotlib.use('tkagg')
+import os
 
+path = os.path.dirname(__file__)
 
 def ob(acc):
     save(acc)
     # accx, accy, accz = acc
 
-    accx = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accx.npy')
-    accy = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accy.npy')
-    accz = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accz.npy')
+    accx = np.load(os.path.join(os.path.dirname(__file__), 'accx.npy'))
+    accy = np.load(os.path.join(os.path.dirname(__file__), 'accy.npy'))
+    accz = np.load(os.path.join(os.path.dirname(__file__), 'accz.npy'))
 
 
     if len(accx) < 128:
@@ -40,32 +42,33 @@ def ob(acc):
 
 def save(acc):
     x, y, z = acc
+    arrx = np.load(os.path.join(os.path.dirname(__file__), 'accx.npy'))
+    arry = np.load(os.path.join(os.path.dirname(__file__), 'accy.npy'))
+    arrz = np.load(os.path.join(os.path.dirname(__file__), 'accz.npy'))
 
-    arrx = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accx.npy')
     arrx = np.append(arrx, x)
-    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accx.npy', arrx)
+    np.save(os.path.join(os.path.dirname(__file__),'accx.npy'), arrx)
 
-    arry = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accy.npy')
     arry = np.append(arry, y)
-    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accy.npy', arry)
+    np.save(os.path.join(os.path.dirname(__file__),'accy.npy'), arry)
 
-    arrz = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accz.npy')
     arrz = np.append(arrz, z)
-    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accz.npy', arrz)
+    np.save(os.path.join(os.path.dirname(__file__), 'accz.npy'), arrz)
 
 def clear():
     x = []
     y = []
     z = []
-    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accx.npy', x)
-    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accy.npy', y)
-    np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accz.npy', z)
+    np.save(os.path.join(os.path.dirname(__file__), 'accx.npy'), x)
+    np.save(os.path.join(os.path.dirname(__file__), 'accy.npy'), y)
+    np.save(os.path.join(os.path.dirname(__file__), 'accz.npy'), z)
 
 def plot_data():
 
-    accx = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accx.npy')
-    accy = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accy.npy')
-    accz = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/walking/accz.npy')
+    accx = np.load(os.path.join(os.path.dirname(__file__), 'accx.npy'))
+    accy = np.load(os.path.join(os.path.dirname(__file__), 'accy.npy'))
+    accz = np.load(os.path.join(os.path.dirname(__file__), 'accz.npy'))
+
     plt.plot(accx, label='x')
     plt.plot(accy, label='y')
     plt.plot(accz, label='z')
@@ -74,9 +77,8 @@ def plot_data():
     plt.pause(1./48.)
     plt.clf()
 
-clear()
-
-# plot_data()
+# clear()
+# pass
 # # x = np.full(128, 5)
 # # x = np.append(x, 6)
 # x = []

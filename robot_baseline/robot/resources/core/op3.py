@@ -2,7 +2,7 @@ import time
 from threading import Thread
 import numpy as np
 np.set_printoptions(precision=2)
-
+import os
 import pybullet as p
 import pybullet_data
 import sys
@@ -10,9 +10,10 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib
 import random
-from robot_baseline.robot.resources.cube_weight import clean_weight, save_weight
-from robot_baseline.robot.resources.ramp import load
+from robot_baseline.robot.resources.data.cube_weight import clean_weight, save_weight
+from robot_baseline.robot.resources.data.ramp import load
 
+modul_path = os.path.dirname(__file__)
 
 matplotlib.use('tkagg')
 if sys.platform == "win32":
@@ -82,9 +83,11 @@ class OP3:
 
         # self.robot = p.loadURDF("./robot/models/robotis_op4.urdf", self.op3StartPos, self.op3StartOrientation)
         # self.cube = p.loadURDF("./robot/models/Bell_weight.urdf", self.weightPos)
-        self.robot = p.loadURDF("/Walking-on-the-ramp/robot_baseline/robot/models/robotis_op4.urdf", self.op3StartPos, self.op3StartOrientation)
-        self.cube = p.loadURDF("/Walking-on-the-ramp/robot_baseline/robot/models/Bell_weight.urdf", self.weightPos)
-        self.ramp = p.loadURDF("/Walking-on-the-ramp/robot_baseline/robot/models/Ramp.urdf", self.rampPos, self.rampOri)
+
+        self.robot = p.loadURDF(os.path.join(os.path.dirname(__file__), '../models/robotis_op4.urdf'), self.op3StartPos, self.op3StartOrientation)
+        self.cube = p.loadURDF(os.path.join(os.path.dirname(__file__), '../models/Bell_weight.urdf'), self.weightPos)
+        self.ramp = p.loadURDF(os.path.join(os.path.dirname(__file__), '../models/Ramp.urdf'), self.rampPos, self.rampOri)
+
         # self.plane = p.loadURDF("H:/Walking/robot_baseline/robot/models/Ramp.urdf", self.planePos)
         p.addUserDebugText(str(round((180 / slope[0]),  2)), [0.0, 0.0, 0.1], textSize=2.0, textColorRGB=[0, 0, 0],parentObjectUniqueId=self.ramp, parentLinkIndex=1)
 
@@ -111,7 +114,8 @@ class OP3:
         # self.throw()
         self.joints = op3_joints
         self.show_cube_weight()
-        mass = np.load('/Walking-on-the-ramp/robot_baseline/robot/resources/cube_weight.npy')[0]
+        mass_path = os.path.join(os.path.dirname(__file__), '../data/cube_weight.npy')
+        mass = np.load(mass_path)[0]
         self.set_cube_weight(mass)
 
 
@@ -438,6 +442,7 @@ class OP3:
         self.txt_id = p.addUserDebugText(str(mass)+"kg", [0.0, -0.15, 0.5], textSize=3.0, textColorRGB=[0, 0, 0], parentObjectUniqueId=self.robot, parentLinkIndex=1)
 
     def rand_ramp(self):
+        ramp_path = os.path.join(os.path.dirname(__file__), 'ramp.npy')
         ramp = random.randint(1, 3)
         if ramp == 1:
             a = [25]
@@ -447,7 +452,7 @@ class OP3:
             a = [40]
         # ramp = random.randint(25, 40)
         # a = [ramp]
-        np.save('/Walking-on-the-ramp/robot_baseline/robot/resources/ramp.npy', a)
+        np.save(ramp_path, a)
 
     # def stop_all_thread(self):
     #     thread_kill(self.sim.ident, SIGTSTP)
