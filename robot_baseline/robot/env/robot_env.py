@@ -6,11 +6,12 @@ import time
 import gym
 import numpy as np
 import pybullet as p
+from pybullet_utils import bullet_client as bc
 from robot.resources.core.op3 import OP3
 from robot.resources.walker import Walker
 from gym.utils import seeding
 from robot.resources.save_reward import save
-
+from stable_baselines3.common.env_checker import check_env
 class Op3Env(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -29,8 +30,8 @@ class Op3Env(gym.Env):
         #     high=np.array([0.02, 0.02, 0.02, 0.02, 0.02, 0.02], dtype=np.float32))
 
         self.action_space = gym.spaces.box.Box(
-                low=np.array([-0.02, -0.02, -0.02], dtype=np.float32),
-                high=np.array([0.02, 0.02, 0.02], dtype=np.float32))
+                low=np.array([-0.02, -0.02], dtype=np.float32),
+                high=np.array([0.02, 0.02], dtype=np.float32))
 
         '''
         # 觀察空間
@@ -39,7 +40,10 @@ class Op3Env(gym.Env):
         space = {
             'accx': gym.spaces.box.Box(low=-20, high=20, shape=(128,)),
             'accy': gym.spaces.box.Box(low=-20, high=20, shape=(128,)),
-            'accz': gym.spaces.box.Box(low=-20, high=20, shape=(128,)),
+            'accz': gym.spaces.box.Box(low=-20, high=20, shape=(128,))
+            # 'ori': gym.spaces.box.Box(low=-2, high=2, shape=(3,))
+
+
             # 'torque': gym.spaces.box.Box(low=-15, high=15, shape=(4, ))
         }
 
@@ -52,10 +56,14 @@ class Op3Env(gym.Env):
         self.np_random, _ = gym.utils.seeding.np_random()
 
         # 選擇連結方式
-        # self.client = p.connect(p.DIRECT)
-        self.client = p.connect(p.GUI)
-        # 加速訓練
-        p.setTimeStep(1/240, self.client)
+        self.client = p.connect(p.DIRECT)
+
+        # self.client = p.connect(p.GUI)
+        # p.setPhysicsEngineParameter(numSolverIterations=1000)
+        # self.client = bc.BulletClient(connection_mode=p.GUI)
+
+        p.setTimeStep(1./240., self.client)
+
         # 初始化所有東西
         self.OP3 = None
         self.done = False
@@ -65,6 +73,7 @@ class Op3Env(gym.Env):
 
     def step(self, action):
         self.n_step += 1
+        # print("----------", self.n_step)
         self.OP3.apply_action(action, self.n_step)
         time.sleep(0.2)
         # print("State = ",self.state)
@@ -72,8 +81,7 @@ class Op3Env(gym.Env):
         self.state = self.OP3.get_state()
         self.reward = self.reward_fun()
         self.cube_ran()
-        # save(self.reward)
-        self.OP3.save_force()
+        save(self.reward)
         info = {}
         return OP3_ob, self.reward, self.done, info
 
@@ -106,10 +114,13 @@ class Op3Env(gym.Env):
 
     def reward_fun(self):
         robot = self.OP3.get_position()
-        dis = abs(np.linalg.norm(robot - [0, 0, 1.5]))
+        bouns = self.OP3.get_direction()
+        dis = abs(np.linalg.norm(robot - [0, 0, 0.35]))
+        # print("dis = ",dis, ", bouns = ", bouns)
         reward = 0
 
-        if dis > 3:
+        if dis > 2.5:
+            dis = dis + (bouns * 1.5)
             reward = dis + 5
             self.OP3.close()
             self.done = True
@@ -117,6 +128,7 @@ class Op3Env(gym.Env):
             reward -= 1
 
         else:
+            dis = dis + (bouns * 1.5)
             reward = dis
 
         if self.OP3.is_fallen():
@@ -127,9 +139,10 @@ class Op3Env(gym.Env):
         return reward
 
     def cube_ran(self):
-        if self.n_step % 2048 == 0:
+        if self.n_step % 512 == 0:
             self.OP3.chane_cube_weight()
             print("-----------------change weight-------------------")
-        if self.n_step % 2048 == 0:
+        if self.n_step % 512 == 0:
             self.OP3.rand_ramp()
             print("------------------change ramp--------------------")
+

@@ -60,8 +60,3 @@ def show_acc(acc):
     plt.draw()
     plt.pause(1./48.)
     plt.clf()
-
-a = [1, 2, 3]
-show_acc(a)
-b = [2, 1, 5]
-show_acc(b)

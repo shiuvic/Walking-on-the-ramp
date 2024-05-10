@@ -7,6 +7,7 @@ from stable_baselines3 import PPO
 import torch as th
 import torch.nn as nn
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.type_aliases import TensorDict
 from robot_baseline import robot
@@ -141,10 +142,11 @@ class Custom(BaseFeaturesExtractor):
 
     def forward(self, observations: TensorDict) -> th.Tensor:
         # torque = observations['torque'].view(-1, 4)
+        # print('observations', observations)
         accx = observations['accx'].view(-1, 1, 128)
         accy = observations['accy'].view(-1, 1, 128)
         accz = observations['accz'].view(-1, 1, 128)
-
+        # ori = observations['ori'].view(-1, 1, 3)
         # print(accx.shape)
         # print(accy.shape)
         # print(accz.shape)
@@ -154,14 +156,19 @@ class Custom(BaseFeaturesExtractor):
         accy_out = self.relu2(self.cnn21(self.cnn2(accy)))
         accz_out = self.relu3(self.cnn31(self.cnn3(accz)))
         # torque_out = self.relu4(self.cnn4(torque))
+        # ori_out = self.relu3(self.cnn31(self.cnn3(ori)))
 
         # print(accx_out.shape)
         # print(accy_out.shape)
         # print(accz_out.shape)
         # print(torque_out.shape)
+        # print(ori_out.shape)
 
-        extractors_out = th.cat((accx_out, accy_out, accz_out), dim=1)
-        extractors_out = extractors_out.view(-1, 128*6)
+        extractors_out = th.cat((accx_out, accy_out, accz_out), dim=0).view(-1, 128*6)
+        # print(f'\033[37m exteactor_out shape = {extractors_out.shape}')
+        # extractors_out = th.cat((extractors_out, ori_out.view(-1)), dim=0).view(-1, 129*6)
+        # print(f'\033[37m exteactor_out shape = {extractors_out.shape}')
+        # extractors_out = extractors_out.view(-1, 129*6)
         # print('\033[37m', extractors_out.shape, '\033[0m extractors output shape')
 
         # extractors_out = th.cat((extractors_out, torque), dim=1)
@@ -213,18 +220,22 @@ from stable_baselines3 import SAC, DQN
 # env = gym.make("Pendulum-v1")
 env = make_vec_env('robot-v0', n_envs=1)
 
-# model = SAC("MultiInputPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
-# model.learn(total_timesteps=300000, log_interval=4, callback=checkpoint_callback)
-# model.save("sac_robot")
-# model = env.close()
+model = SAC("MultiInputPolicy", env, policy_kwargs=policy_kwargs, verbose=1)
+
+model.learn(total_timesteps=300000, log_interval=4, callback=checkpoint_callback)
+model.save("sac_robot")
+model = env.close()
 
 # del model # remove to demonstrate saving and loading
 
-model = SAC.load("sac_robot")
+# model = SAC.load("sac_robot.zip")
+# print(model.policy)
+# print('>>>>>>>><<<<<<<<<<<<<<<<<<',model.policy)
 
-obs = env.reset()
-while True:
-    action, _states = model.predict(obs, deterministic=True)
-    obs, reward, done, info = env.step(action)
+# obs = env.reset()
+# while True:
+#     action, _states = model.predict(obs, deterministic=True)
+#     obs, reward, done, info = env.step(action)
+
 
 #------------------------------------------SAC---------------------------------------------#

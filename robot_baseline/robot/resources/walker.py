@@ -121,6 +121,7 @@ class Walker(OP3):
                 i = 0
                 phrase = not phrase
                 self.wfunc._update_new_param(self.parameters)
+                # print(self.parameters)
 
             time.sleep(1. / 240.)
             if self.stop_all:
@@ -161,19 +162,16 @@ class Walker(OP3):
     def apply_action(self, action, step):
         state = self.get_state()
         alpha = math.log(step, 300)
+
         if step > 300:
             alpha = 1
+
         action = action * 0.8 * alpha
         action = action + state
-        # step_scale, step_offset, vx_scale, vy_scale, sho_pitch, sho_roll = action
-        step_scale, step_offset, sho_roll = action
+        step_scale, step_offset = action
+
         step_scale = max(min(step_scale, 2.), -2.)
         step_offset = max(min(step_offset, 2.), -2.)
-        # vx_scale = max(min(vx_scale, 2.), -2.)
-        # vy_scale = max(min(vy_scale, 2.), -2.)
-        # sho_pitch = max(min(sho_pitch, 2.), -2.)
-        sho_roll = max(min(sho_roll, 2.), -2.)
-
 
         self.parameters = {"swing_scale": 0.0,
                       "step_scale": step_scale,
@@ -190,49 +188,39 @@ class Walker(OP3):
                        'ank_roll': 0.0,
                        'knee': 0.0,
                        'sho_pitch': -0.063, ##-0.063
-                       'sho_roll': sho_roll,  ##-0.063
+                       'sho_roll': -0.063,  ##-0.063
                        'el': 0.0}
+
         self.wfunc._update_new_offset(self.walk_offset)
         # self.wfunc._update_new_param(self.parameters, self.walk_offset)
 
     def get_state(self):
-        # parameters = {"step_scale",
-        #               "step_offset",
-        #               "vx_scale",
-        #               "vy_scale"}
-        # walk_offset = {'sho_pitch',
-        #                'sho_roll'}
-
         parameters = {"step_scale",
                       "step_offset"}
-        walk_offset = {'sho_roll'}
 
         state = []
         for k, v in self.parameters.items():
             if k in parameters:
                 state.append(v)
-        for k, v in self.walk_offset.items():
-            if k in walk_offset:
-                state.append(v)
+        # for k, v in self.walk_offset.items():
+        #     if k in walk_offset:
+        #         state.append(v)
 
         return np.array(state)
 
 
     def get_obsevervation(self):
         acc = self.get_acc()
+        ori = self.get_orientation()
         acc = acc_process.ob(acc)
         # acc = np.asarray(acc).flatten()
-        l_ank_pitch = self.get_force(4)
-        l_ank_roll = self.get_force(5)
-        r_ank_pitch = self.get_force(10)
-        r_ank_roll = self.get_force(11)
         # print(acc)
         # ob = np.append(acc, [l_ank_pitch, l_ank_roll, r_ank_pitch, r_ank_roll])
         ob = {
             'accx': acc[0],
             'accy': acc[1],
-            'accz': acc[2],
-            # 'torque': np.array([l_ank_pitch, l_ank_roll, r_ank_pitch, r_ank_roll])
+            'accz': acc[2]
+            # 'ori': ori[:3]
         }
         return ob
 
@@ -244,7 +232,6 @@ class Walker(OP3):
         # self._th_walk.join()
         self.stop_run = True
         self.NOOO()
-
 
 def interpolate(anglesa, anglesb, coefa):
     z = {}
@@ -267,12 +254,15 @@ def get_distance(anglesa, anglesb):
 if __name__ == '__main__':
     wewe = p.connect(p.GUI)
     walker = Walker(wewe)
+    # walker.init_walk()
     # time.sleep(1)
     walker.reset()
     while True:
         # walker.show_force(3)
         # walker.get_obsevervation()
         # acc = walker.get_acc()
+        # walker.get_acceleration()
+        # walker.get_friction()
         # walker.show_acc(acc)
         time.sleep(0.1)
         # walker.close()

@@ -5,13 +5,14 @@ np.set_printoptions(precision=2)
 import os
 import pybullet as p
 import pybullet_data
+from pybullet_utils import bullet_client as bc
 import sys
 import math
 import matplotlib.pyplot as plt
 import matplotlib
 import random
 from robot_baseline.robot.resources.data.cube_weight import clean_weight, save_weight
-from robot_baseline.robot.resources.data.ramp import load
+from robot_baseline.robot.resources.data.ramp import load, save
 
 modul_path = os.path.dirname(__file__)
 
@@ -47,36 +48,38 @@ op3_joints = ['l_hip_yaw',
 class OP3:
     def __init__(self, fallen_reset=False, sim_speed=1.0, client=None, *args, **kwargs):
         self.fallen_reset = fallen_reset
+
         # self.physicsClient = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
+        # self.physicsClient = bc.BulletClient(connection_mode=p.GUI)
         self.physicsClient = client
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
         self.speed = sim_speed
 
-        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
+        # p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+        # p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
+        # p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
 
         p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
         p.setGravity(0, 0, -9.8)
+
+
         slope = load()
-        print(math.sin(math.pi/slope)*1.5)
+
         # self.op3StartPos = [0, 0, 0.5-0.03]
-        self.op3StartPos = [0, 0, math.sin(math.pi/slope) + 0.3]
+        self.op3StartPos = [0.01, 0, 0.36]
 
         # self.weightPos = [2.5, 0, 3]
         # self.weightPos = [0.1, 0, 0.6-0.03]
         self.weightPos = [0.1, 0, self.op3StartPos[2]+0.1]
 
         # self.rampPos = [1.6, 0, 0.1178-0.1]
-        self.rampPos = [math.cos(math.pi/slope)*1.45, 0, math.sin(math.pi/slope)*1.5]
-        # self.planePos = [-1.3823, 0, 0.2356-0.1]
-
-        # self.rampOri = p.getQuaternionFromEuler([0, math.pi/40, 0])
-
+        self.rampPos = [0.0, 0.0, 0.0]
+        # self.rampPos = [math.cos(math.pi/slope)*1.45, 0, math.sin(math.pi/slope)*1.5]
         self.rampOri = p.getQuaternionFromEuler([0, -math.pi / slope, 0])
 
         self.op3StartOrientation = p.getQuaternionFromEuler([0, -math.pi / slope, 0])
+        # self.op3StartOrientation = p.getQuaternionFromEuler([0, 0, 0])
 
         self.planeId = p.loadURDF("plane.urdf", [0, 0, 0])
         # self.planeId = p.loadURDF("plane.urdf", [0, 0, -0.1])
@@ -88,37 +91,45 @@ class OP3:
         self.cube = p.loadURDF(os.path.join(os.path.dirname(__file__), '../models/Bell_weight.urdf'), self.weightPos)
         self.ramp = p.loadURDF(os.path.join(os.path.dirname(__file__), '../models/Ramp.urdf'), self.rampPos, self.rampOri)
 
-        # self.plane = p.loadURDF("H:/Walking/robot_baseline/robot/models/Ramp.urdf", self.planePos)
-        p.addUserDebugText(str(round((180 / slope[0]),  2)), [0.0, 0.0, 0.1], textSize=2.0, textColorRGB=[0, 0, 0],parentObjectUniqueId=self.ramp, parentLinkIndex=1)
+        # self.ramp_2 = p.loadURDF(os.path.join(os.path.dirname(__file__), '../models/ramp2.0.urdf'), [0,0,0], p.getQuaternionFromEuler([0, 0, 0]))
+
+        # p.addUserDebugText(str(round((180 / slope[0]),  2)), [0.0, 0.0, 0.1], textSize=2.0, textColorRGB=[0, 0, 0],parentObjectUniqueId=self.ramp, parentLinkIndex=1)
 
         self.numJoints = p.getNumJoints(self.robot)
         self.targetVel = 0
         self.maxForce = 100
+
         self.camera_follow()
+
         self.accx = []
         self.accy = []
         self.accz = []
         self.acc = []
+
         self.angles = None
         self.update_angle_th()
         # self.check_reset_th()
         self.stop_run = False
         self.sim = None
+
         # self.run_acc_th()
         # self.update_camera_th()
-        self.clear_force()
-        self.run_sim_th()
 
+        self.run_sim_th()
         self._set_joint()
-        # print(p.getDynamicsInfo(self.robot, -1))
-        # self.throw()
+
         self.joints = op3_joints
+
         self.show_cube_weight()
         mass_path = os.path.join(os.path.dirname(__file__), '../data/cube_weight.npy')
         mass = np.load(mass_path)[0]
+
         self.set_cube_weight(mass)
 
 
+        # print(p.getMatrixFromQuaternion(self.get_orientation()))
+
+        self.get_direction()
 
     def ready(self):
             self.ready_pos = self.wfunc.get(True, 0, [0, 0, 0])
@@ -133,6 +144,7 @@ class OP3:
 
     def get_orientation(self):
         _, orientation = p.getBasePositionAndOrientation(self.robot)
+        # orientation = p.getEulerFromQuaternion(orientation)
         return np.array(orientation)
 
     def get_position(self):
@@ -140,7 +152,11 @@ class OP3:
         return np.array(position)
 
     def camera_follow(self, distance=1.0, pitch=-35.0, yaw=50.0):
-        lookat = self.get_position() - [0, 0, 0.1]
+        # lookat = self.get_position() - [0, 0, 0.1]
+        lookat = self.get_position() + [1.5, 0, 0.01]
+        pitch = 0
+        yaw = 0-1.5
+        distance = 1.8
         p.resetDebugVisualizerCamera(distance, yaw, pitch, lookat)
 
     def is_fallen(self):
@@ -179,48 +195,22 @@ class OP3:
             time.sleep(0.1 / self.sim_speed)
 
     def run_sim_th(self):
-        def _cb_sim():
+        def _rum_sim():
             while True:
                 p.stepSimulation()
+                p.setPhysicsEngineParameter(numSolverIterations=int(300))
                 time.sleep(1.0 / (240.0 * self.sim_speed))
+                # self.change_slope(self.getdrgee())
                 # self.camera_follow(distance=0.5)
                 if self.stop_run:
                     break
 
-        self.sim = Thread(target=_cb_sim)
+        self.sim = Thread(target=_rum_sim)
         self.sim.start()
 
     def NOOO(self):
         self.stop_run = True
         self.sim.join()
-
-
-
-    def check_reset_th(self):
-        def _cb_reset():
-            self.prev_state = 1.0
-            while True:
-                # self.show_force(4)
-                # self.get_acceleration()
-                curr_state = p.readUserDebugParameter(self.bt_rst)
-                if curr_state != self.prev_state or (self.fallen_reset and self.is_fallen()):
-                    self.reset_and_start()
-                    self.prev_state = curr_state
-                time.sleep(0.001)
-
-        Thread(target=_cb_reset).start()
-
-    # def update_angle_th(self):
-    #     def _cb_angles():
-    #         while True:
-    #             # self.show_force(4)
-    #             angles = []
-    #             for joint in range(self.numJoints):
-    #                 angles.append(p.getJointState(self.robot, joint)[0])
-    #             self.angles = angles
-    #             time.sleep(0.001)
-    #
-    #     Thread(target=_cb_angles).start()
 
     def update_angle_th(self):
         angles = []
@@ -242,7 +232,6 @@ class OP3:
             while True:
                 p.stepSimulation()
                 time.sleep(1. / 240.)
-                self.show_force(4)
         finally:
             OP3Pos, OP3Orn = p.getBasePositionAndOrientation(self.robot)
             # print(OP3Pos, OP3Orn)
@@ -263,11 +252,11 @@ class OP3:
                 basePos, baseOrientation = p.getBasePositionAndOrientation(self.robot, physicsClientId=self.physicsClient)
 
                 matrix = p.getMatrixFromQuaternion(baseOrientation, physicsClientId=self.physicsClient)
-                tx_vec = np.array([matrix[0], matrix[3], matrix[6]])  # 变换后的x轴
-                tz_vec = np.array([matrix[2], matrix[5], matrix[8]])  # 变换后的z轴
+                tx_vec = np.array([matrix[0], matrix[3], matrix[6]])
+                tz_vec = np.array([matrix[2], matrix[5], matrix[8]])
 
-                basePos = np.array(basePos)
-                # 摄像头的位置
+                basePos = np.array()
+
                 cameraPos = basePos + BASE_RADIUS * tx_vec + 0.5 * BASE_THICKNESS * tz_vec
                 targetPos = cameraPos + 1 * tx_vec
 
@@ -278,10 +267,10 @@ class OP3:
                     physicsClientId=self.physicsClient
                 )
                 projectionMatrix = p.computeProjectionMatrixFOV(
-                    fov=50.0,  # 摄像头的视线夹角
+                    fov=50.0,
                     aspect=1.0,
-                    nearVal=0.01,  # 摄像头焦距下限
-                    farVal=20,  # 摄像头能看上限
+                    nearVal=0.01,
+                    farVal=20,
                     physicsClientId=self.physicsClient
                 )
 
@@ -318,7 +307,6 @@ class OP3:
         pre_vel[0] = p.getBaseVelocity(self.robot)[0][0]
         pre_vel[1] = p.getBaseVelocity(self.robot)[0][1]
         pre_vel[2] = p.getBaseVelocity(self.robot)[0][2]
-        # 串街 位置, 方向, 加速度
         time.sleep(t)
         new_vel[0] = p.getBaseVelocity(self.robot)[0][0]
         new_vel[1] = p.getBaseVelocity(self.robot)[0][1]
@@ -329,6 +317,7 @@ class OP3:
         acc[2] = (new_vel[2] - pre_vel[2]) / t
         # self.show_acc(acc)
         # self.acc = acc
+        # print(p.getLinkState(self.robot, 1))
         return acc
 
     def run_acc_th(self):
@@ -371,16 +360,6 @@ class OP3:
         plt.pause(1./240.)
         plt.clf()
 
-    def show_force(self, num):
-        x = p.getJointState(self.robot, num)
-        # print(x)
-        self.accx.append(x[3])
-        plt.plot(self.accx)
-        # plt.legend()
-        plt.draw()
-        plt.pause(1./240.)
-        plt.clf()
-
     def get_force(self, num):
         return p.getJointState(self.robot, num)[3]
 
@@ -417,8 +396,8 @@ class OP3:
         return self.acc
 
     def chane_cube_weight(self):
-        # mass = random.random()
-        # mass = round(mass, 3)
+        mass = random.random()
+        mass = round(mass, 3)
         rand = random.randint(1, 3)
         if rand == 1:
             mass = 0.2
@@ -442,7 +421,7 @@ class OP3:
         self.txt_id = p.addUserDebugText(str(mass)+"kg", [0.0, -0.15, 0.5], textSize=3.0, textColorRGB=[0, 0, 0], parentObjectUniqueId=self.robot, parentLinkIndex=1)
 
     def rand_ramp(self):
-        ramp_path = os.path.join(os.path.dirname(__file__), 'ramp.npy')
+        # ramp_path = os.path.join(os.path.dirname(__file__), 'ramp.npy')
         ramp = random.randint(1, 3)
         if ramp == 1:
             a = [25]
@@ -452,12 +431,25 @@ class OP3:
             a = [40]
         # ramp = random.randint(25, 40)
         # a = [ramp]
-        np.save(ramp_path, a)
+        print('ramp to ', a)
+        save(a)
 
-    # def stop_all_thread(self):
-    #     thread_kill(self.sim.ident, SIGTSTP)
+    def get_friction(self):
+        # print(p.getDynamicsInfo(self.robot))
+        print("##################################")
+        print(len(p.getContactPoints(self.robot, self.ramp)))
+        print(p.getContactPoints(self.robot, self.ramp))
+        print("##################################")
 
+    def get_com(self):
+        com = p.getDynamicsInfo(self.robot, -1)[2]
+        print(com)
 
+    def get_direction(self):
+        rot_mat = p.getMatrixFromQuaternion(self.get_orientation())
+        local_forward = rot_mat[:3]
+        theta = np.dot(np.asarray([1, 0, 0]), np.asarray(local_forward))
+        return theta
 def interpolate(anglesa, anglesb, coefa):
     z = {}
     joints = anglesa.keys()
@@ -465,8 +457,17 @@ def interpolate(anglesa, anglesb, coefa):
         z[j] = anglesa[j] * coefa + anglesb[j] * (1 - coefa)
     return z
 
+def run():
+    op3 = OP3()
+def run2():
+    op4= OP3()
+
 
 if __name__ == '__main__':
     op3 = OP3(p.connect(p.GUI))
+    # Thread(target=run()).start()
+    # Thread(target=run2()).start()
+
+
     # op3.run()
     pass

@@ -8,6 +8,7 @@ def save_weight(x):
 def clean_weight():
     # a = [0.8]
     a = [0.4]
+
     np.save(path, a)
 
 def load():
