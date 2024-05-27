@@ -111,7 +111,7 @@ class WFunc:
         f3.scale = self.parameters["step_scale"]
         f3.offset = self.parameters["step_offset"]
         self.pfn["l_hip_pitch"] = f3
-        self.pfn["l_sho_pitch"] = f3
+
         f33 = f3.mirror()
         f33.offset += self.parameters["ankle_offset"]
         self.pfn["l_ank_pitch"] = f33
@@ -125,7 +125,7 @@ class WFunc:
         f5.in_scale *= 2
         f5.scale = 0
         self.afn["l_hip_pitch"] = f5
-        self.afn["l_sho_pitch"] = f5
+
 
         f6 = f3.mirror()
         f6.in_scale *= 2
@@ -136,6 +136,14 @@ class WFunc:
         f7 = f4.clone()
         f7.scale = 0
         self.afn["l_knee"] = f7
+
+        f8 = f7.clone()
+        f8.scale = 0
+        f8.offset = 0
+        self.afn["l_sho_pitch"] = f8
+
+        f9 = f8.mirror()
+        self.pfn["l_sho_pitch"] =f9
 
         self.forward = [f5, f6]
 
@@ -193,9 +201,12 @@ class WFunc:
         f7.scale = 0
 
         f8 = self.afn["l_sho_pitch"]
-        f3.copy_to(f8)
-        f8.in_scale *= 2
+        f4.copy_to(f8)
         f8.scale = 0
+        f8.offset = 0
+
+        f9 = self.pfn["l_sho_pitch"]
+        f8.copy_to(f9)
 
         self.generate_right()
 
